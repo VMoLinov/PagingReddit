@@ -5,9 +5,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import ru.molinov.pagingreddit.data.Post
 import ru.molinov.pagingreddit.data.DataRemoteMediator
 import ru.molinov.pagingreddit.data.Database
+import ru.molinov.pagingreddit.data.Post
 import ru.molinov.pagingreddit.network.ApiService
 import javax.inject.Inject
 
