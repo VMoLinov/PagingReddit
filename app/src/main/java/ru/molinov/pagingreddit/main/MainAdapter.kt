@@ -1,4 +1,4 @@
-package ru.molinov.pagingreddit.ui
+package ru.molinov.pagingreddit.main
 
 import android.view.LayoutInflater
 import android.view.View

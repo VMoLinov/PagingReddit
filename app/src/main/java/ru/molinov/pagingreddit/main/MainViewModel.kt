@@ -1,4 +1,4 @@
-package ru.molinov.pagingreddit.ui
+package ru.molinov.pagingreddit.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

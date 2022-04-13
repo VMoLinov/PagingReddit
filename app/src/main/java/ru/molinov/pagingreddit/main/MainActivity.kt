@@ -1,4 +1,4 @@
-package ru.molinov.pagingreddit.ui
+package ru.molinov.pagingreddit.main
 
 import android.os.Bundle
 import android.util.Log
