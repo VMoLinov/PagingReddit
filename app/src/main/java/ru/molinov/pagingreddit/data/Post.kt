@@ -17,7 +17,6 @@ data class Post(
     val total_awards_received: Int?
 ) : Parcelable
 
-@Entity
 @Parcelize
 data class ServerDataPage(
     val data: Post
