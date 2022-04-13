@@ -1,32 +1,26 @@
 package ru.molinov.pagingreddit.ui
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import ru.molinov.pagingreddit.data.Data
+import ru.molinov.pagingreddit.data.Post
 import ru.molinov.pagingreddit.databinding.RecyclerItemBinding
 import javax.inject.Inject
 
 class MainAdapter @Inject constructor() :
-    PagingDataAdapter<Data, MainAdapter.DataViewHolder>(DiffUtils) {
+    PagingDataAdapter<Post, MainAdapter.DataViewHolder>(DiffUtils) {
 
-    object DiffUtils : DiffUtil.ItemCallback<Data>() {
-        override fun areItemsTheSame(oldItem: Data, newItem: Data): Boolean {
-            return oldItem.num == newItem.num
-        }
-
-        override fun areContentsTheSame(oldItem: Data, newItem: Data): Boolean {
-            return oldItem.num == newItem.num
-        }
+    object DiffUtils : DiffUtil.ItemCallback<Post>() {
+        override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean = oldItem == newItem
+        override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean = oldItem == newItem
     }
 
     override fun onBindViewHolder(holder: DataViewHolder, position: Int) {
-        val data = getItem(position)
-        if (data != null) {
-            holder.bind(data)
-        }
+        getItem(position)?.let { holder.bind(it) }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DataViewHolder {
@@ -36,13 +30,24 @@ class MainAdapter @Inject constructor() :
                 parent,
                 false
             )
-        )
+        ).apply { itemView.setOnClickListener { onClick(it) } }
     }
 
     inner class DataViewHolder(private val binding: RecyclerItemBinding) :
-        RecyclerView.ViewHolder(binding.root) {
-        fun bind(data: Data) {
-            binding.title.text = data.id
+        RecyclerView.ViewHolder(binding.root), View.OnClickListener {
+
+        fun bind(post: Post) = with(binding) {
+            description.text = post.title
+            stars.text = post.total_awards_received.toString()
+            comments.text = post.num_comments
+        }
+
+        override fun onClick(view: View?) {
+            Toast.makeText(
+                view?.context,
+                "author is ${getItem(absoluteAdapterPosition)?.author}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 }

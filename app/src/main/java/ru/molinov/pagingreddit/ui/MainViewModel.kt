@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import ru.molinov.pagingreddit.data.Data
+import ru.molinov.pagingreddit.data.Post
 import ru.molinov.pagingreddit.data.DataRemoteMediator
 import ru.molinov.pagingreddit.data.Database
 import ru.molinov.pagingreddit.network.ApiService
@@ -18,7 +18,7 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
 
     @ExperimentalPagingApi
-    fun getAll(): Flow<PagingData<Data>> = Pager(
+    fun getAll(): Flow<PagingData<Post>> = Pager(
         config = PagingConfig(
             200,
             enablePlaceholders = false,

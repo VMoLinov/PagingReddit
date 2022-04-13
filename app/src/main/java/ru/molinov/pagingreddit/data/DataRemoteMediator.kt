@@ -13,13 +13,13 @@ import java.io.IOException
 class DataRemoteMediator constructor(
     private val db: Database,
     private val apiService: ApiService
-) : RemoteMediator<Int, Data>() {
+) : RemoteMediator<Int, Post>() {
 
     override suspend fun initialize(): InitializeAction {
         return InitializeAction.LAUNCH_INITIAL_REFRESH
     }
 
-    override suspend fun load(loadType: LoadType, state: PagingState<Int, Data>): MediatorResult {
+    override suspend fun load(loadType: LoadType, state: PagingState<Int, Post>): MediatorResult {
         return try {
             when (loadType) {
                 LoadType.REFRESH -> handleLoad(null, state.config.pageSize, true)
@@ -36,21 +36,17 @@ class DataRemoteMediator constructor(
         }
     }
 
-    private suspend fun handleLoad(
-        key: String?,
-        pageSize: Int,
-        clear: Boolean
-    ): MediatorResult {
+    private suspend fun handleLoad(key: String?, pageSize: Int, clearDB: Boolean): MediatorResult {
         val response: List<ServerDataPage> =
             if (key == null) apiService.getData().data.children
             else apiService.getDataAfter(key, pageSize).data.children
         val isEndList = response.isEmpty()
-        val list = mutableListOf<Data>()
+        val list = mutableListOf<Post>()
         response.forEach { serverData -> list.add(serverData.data) }
         db.withTransaction {
-            if (clear) db.getDao().clearAll()
+            if (clearDB) db.getDao().clearAll()
             db.getDao().insertAll(list)
         }
-        return MediatorResult.Success(isEndList)
+        return MediatorResult.Success(endOfPaginationReached = isEndList)
     }
 }

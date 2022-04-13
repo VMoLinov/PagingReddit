@@ -21,14 +21,13 @@ object AppModule {
     @Provides
     @Singleton
     fun providesDatabase(context: Application) =
-        Room.databaseBuilder(context, Database::class.java, "Database")
+        Room.databaseBuilder(context, Database::class.java, "Reddit")
             .fallbackToDestructiveMigration()
             .build()
 
     @Provides
     @Singleton
-    fun providesDao(database: Database) =
-        database.getDao()
+    fun providesDao(database: Database) = database.getDao()
 
     @Provides
     @Singleton
