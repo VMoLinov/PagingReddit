@@ -38,7 +38,8 @@ data class ServerDataPage(
 @Parcelize
 @Entity
 data class Data(
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
+    val num: Long = 0,
     val id: String,
     val title: String?,
     val author: String?,

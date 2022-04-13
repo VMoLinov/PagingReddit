@@ -19,7 +19,12 @@ class MainViewModel @Inject constructor(
 
     @ExperimentalPagingApi
     fun getAll(): Flow<PagingData<Data>> = Pager(
-        config = PagingConfig(100, enablePlaceholders = false),
+        config = PagingConfig(
+            200,
+            enablePlaceholders = false,
+            prefetchDistance = 100,
+            maxSize = 10000
+        ),
         pagingSourceFactory = { db.getDao().getData() },
         remoteMediator = DataRemoteMediator(db, apiService)
     ).flow.cachedIn(viewModelScope)

@@ -14,11 +14,11 @@ class MainAdapter @Inject constructor() :
 
     object DiffUtils : DiffUtil.ItemCallback<Data>() {
         override fun areItemsTheSame(oldItem: Data, newItem: Data): Boolean {
-            return oldItem.id == newItem.id
+            return oldItem.num == newItem.num
         }
 
         override fun areContentsTheSame(oldItem: Data, newItem: Data): Boolean {
-            return oldItem == newItem
+            return oldItem.num == newItem.num
         }
     }
 

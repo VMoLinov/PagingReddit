@@ -5,8 +5,6 @@ import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import ru.molinov.pagingreddit.network.ApiService
 import java.io.IOException
@@ -21,43 +19,16 @@ class DataRemoteMediator constructor(
         return InitializeAction.LAUNCH_INITIAL_REFRESH
     }
 
-    override suspend fun load(loadType: LoadType, state: PagingState<Int, Data>):
-            MediatorResult {
-        val page = when (val pageKeyData = getKeyPageData(loadType, state)) {
-            is MediatorResult.Success -> {
-                return pageKeyData
-            }
-            else -> {
-                pageKeyData.toString()
-            }
-        }
+    override suspend fun load(loadType: LoadType, state: PagingState<Int, Data>): MediatorResult {
         return try {
-            val response: List<ServerDataPage> = if (page.isEmpty()) {
-                apiService.getData().data.children
-            } else {
-                apiService.getDataAfter(page, state.config.pageSize).data.children
-            }
-            val before = response.first().data.name
-            val after = response.last().data.name
-            val endOfList = response.isEmpty()
-            db.withTransaction {
-                if (loadType == LoadType.REFRESH) {
-                    db.remoteKeyDao().clearAll()
-                    db.getDao().clearAll()
+            when (loadType) {
+                LoadType.REFRESH -> handleLoad(null, state.config.pageSize, true)
+                LoadType.PREPEND -> MediatorResult.Success(true)
+                LoadType.APPEND -> {
+                    val key = state.lastItemOrNull()?.name
+                    handleLoad(key, state.config.pageSize, false)
                 }
-                val keys = response.map {
-                    RemoteKeys(
-                        it.data.id,
-                        before,
-                        after
-                    )
-                }
-                val list = mutableListOf<Data>()
-                response.forEach { list.add(it.data) }
-                db.remoteKeyDao().insertRemote(keys)
-                db.getDao().insertAll(list)
             }
-            MediatorResult.Success(endOfPaginationReached = endOfList)
         } catch (e: IOException) {
             MediatorResult.Error(e)
         } catch (e: HttpException) {
@@ -65,55 +36,21 @@ class DataRemoteMediator constructor(
         }
     }
 
-    private suspend fun getKeyPageData(loadType: LoadType, state: PagingState<Int, Data>):
-            Any? {
-        return when (loadType) {
-            LoadType.REFRESH -> {
-                val remoteKeys = getRefreshRemoteKey(state)
-                remoteKeys?.nextKey
-            }
-            LoadType.PREPEND -> {
-                val remoteKeys = getFirstRemoteKey(state)
-                val prevKey = remoteKeys?.prevKey ?: MediatorResult.Success(
-                    endOfPaginationReached = false
-                )
-                prevKey
-            }
-            LoadType.APPEND -> {
-                val remoteKeys = getLastRemoteKey(state)
-                val nextKey = remoteKeys?.nextKey ?: MediatorResult.Success(
-                    endOfPaginationReached = true
-                )
-                nextKey
-            }
+    private suspend fun handleLoad(
+        key: String?,
+        pageSize: Int,
+        clear: Boolean
+    ): MediatorResult {
+        val response: List<ServerDataPage> =
+            if (key == null) apiService.getData().data.children
+            else apiService.getDataAfter(key, pageSize).data.children
+        val isEndList = response.isEmpty()
+        val list = mutableListOf<Data>()
+        response.forEach { serverData -> list.add(serverData.data) }
+        db.withTransaction {
+            if (clear) db.getDao().clearAll()
+            db.getDao().insertAll(list)
         }
-    }
-
-    private suspend fun getFirstRemoteKey(state: PagingState<Int, Data>): RemoteKeys? {
-        return withContext(Dispatchers.IO) {
-            state.pages
-                .firstOrNull { it.data.isNotEmpty() }
-                ?.data?.firstOrNull()
-                ?.let { data -> db.remoteKeyDao().getRemoteKeys(data.id) }
-        }
-    }
-
-    private suspend fun getLastRemoteKey(state: PagingState<Int, Data>): RemoteKeys? {
-        return withContext(Dispatchers.IO) {
-            state.pages
-                .lastOrNull { it.data.isNotEmpty() }
-                ?.data?.lastOrNull()
-                ?.let { data -> db.remoteKeyDao().getRemoteKeys(data.id) }
-        }
-    }
-
-    private suspend fun getRefreshRemoteKey(state: PagingState<Int, Data>): RemoteKeys? {
-        return withContext(Dispatchers.IO) {
-            state.anchorPosition?.let { position ->
-                state.closestItemToPosition(position)?.id?.let { keysId ->
-                    db.remoteKeyDao().getRemoteKeys(keysId)
-                }
-            }
-        }
+        return MediatorResult.Success(isEndList)
     }
 }
